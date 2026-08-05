@@ -1,0 +1,73 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "wick",
+  "title": "Wick",
+  "description": "Start and control Wick, the screen-border timer.",
+  "icon": "command-icon.png",
+  "author": "tw",
+  "categories": ["Productivity"],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "start",
+      "title": "Start Timer",
+      "subtitle": "Wick",
+      "description": "Start a Wick timer. Accepts 25, 45m, 1h30 or 90s.",
+      "mode": "no-view",
+      "arguments": [
+        {
+          "name": "duration",
+          "placeholder": "25m",
+          "type": "text",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "toggle",
+      "title": "Pause or Resume Timer",
+      "subtitle": "Wick",
+      "description": "Pause a running Wick timer, or resume a paused one.",
+      "mode": "no-view"
+    },
+    {
+      "name": "add",
+      "title": "Add Time",
+      "subtitle": "Wick",
+      "description": "Stretch the running timer. Defaults to 5 minutes.",
+      "mode": "no-view",
+      "arguments": [
+        {
+          "name": "duration",
+          "placeholder": "5m",
+          "type": "text",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "stop",
+      "title": "Stop Timer",
+      "subtitle": "Wick",
+      "description": "Clear the timer and the border.",
+      "mode": "no-view"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.80.0"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^1.0.11",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.0"
+  },
+  "scripts": {
+    "build": "ray build -e dist",
+    "dev": "ray develop",
+    "lint": "ray lint",
+    "fix-lint": "ray lint --fix"
+  }
+}

@@ -1,0 +1,109 @@
+name: Release
+
+# Build Wick.app and publish it to a GitHub Release. Pushes to main update the
+# rolling "latest" release; pushing a v* tag cuts a versioned release.
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths:
+      - "Sources/**"
+      - "Resources/**"
+      - "Tests/**"
+      - "Info.plist"
+      - "build.sh"
+      - "test.sh"
+      - ".github/workflows/release.yml"
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-latest # Apple Silicon
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select latest Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Test
+        run: ./test.sh
+
+      - name: Build Wick.app
+        run: ./build.sh
+
+      # Sign + notarize ONLY when the full Apple secret set is present. Otherwise
+      # ship an unsigned build — it still runs, after the Gatekeeper prompt.
+      - name: Determine Apple signing readiness
+        id: signing
+        env:
+          CERT: ${{ secrets.APPLE_CERTIFICATE }}
+          CERT_PW: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          AID: ${{ secrets.APPLE_ID }}
+          APW: ${{ secrets.APPLE_PASSWORD }}
+          TEAM: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          if [ -n "$CERT" ] && [ -n "$CERT_PW" ] && [ -n "$IDENTITY" ] && [ -n "$AID" ] && [ -n "$APW" ] && [ -n "$TEAM" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "Apple signing: READY → signed + notarized"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Apple signing: incomplete → unsigned build"
+          fi
+
+      - name: Import Developer ID certificate
+        if: steps.signing.outputs.ready == 'true'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          echo "$APPLE_CERTIFICATE" | base64 --decode > /tmp/cert.p12
+          KEYCHAIN=/tmp/build.keychain
+          security create-keychain -p ci "$KEYCHAIN"
+          security default-keychain -s "$KEYCHAIN"
+          security unlock-keychain -p ci "$KEYCHAIN"
+          security set-keychain-settings -t 3600 -l "$KEYCHAIN"
+          security import /tmp/cert.p12 -k "$KEYCHAIN" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k ci "$KEYCHAIN" >/dev/null
+
+      - name: Sign (Developer ID, hardened runtime)
+        if: steps.signing.outputs.ready == 'true'
+        env:
+          IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        run: |
+          codesign --force --options runtime --timestamp --sign "$IDENTITY" build/Wick.app
+          codesign --verify --deep --strict --verbose=2 build/Wick.app
+
+      - name: Notarize + staple
+        if: steps.signing.outputs.ready == 'true'
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          ditto -c -k --keepParent build/Wick.app /tmp/notarize.zip
+          xcrun notarytool submit /tmp/notarize.zip \
+            --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+          xcrun stapler staple build/Wick.app
+
+      - name: Package
+        run: ditto -c -k --keepParent build/Wick.app Wick.zip
+
+      - name: Publish release
+        if: github.event_name != 'pull_request'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'latest' }}
+          name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'Latest build' }}
+          prerelease: ${{ !startsWith(github.ref, 'refs/tags/') }}
+          files: Wick.zip
+          fail_on_unmatched_files: true

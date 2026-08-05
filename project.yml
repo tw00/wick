@@ -1,0 +1,31 @@
+name: Wick
+options:
+  bundleIdPrefix: com.tw
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    DEVELOPMENT_TEAM: AL644B52XC
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    GENERATE_INFOPLIST_FILE: NO
+    ENABLE_HARDENED_RUNTIME: YES
+
+targets:
+  Wick:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources
+      - path: Resources
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_NAME: Wick
+        PRODUCT_BUNDLE_IDENTIFIER: com.tw.wick
+        INFOPLIST_FILE: Info.plist
+        INFOPLIST_KEY_CFBundleIconFile: AppIcon
