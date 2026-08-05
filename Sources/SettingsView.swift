@@ -3,6 +3,9 @@ import AppKit
 import ServiceManagement
 
 struct SettingsView: View {
+    /// The window is built at exactly this size; nothing here asks to resize it.
+    static let size = NSSize(width: 470, height: 540)
+
     var body: some View {
         TabView {
             BorderSettings()
@@ -14,7 +17,7 @@ struct SettingsView: View {
             GeneralSettings()
                 .tabItem { Label("General", systemImage: "gearshape") }
         }
-        .frame(width: 470, height: 520)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -55,7 +58,7 @@ private struct BorderSettings: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 HStack {
-                    Slider(value: $prefs.thickness, in: 2...24, step: 1)
+                    Slider(value: $prefs.thickness, in: 1...24, step: 1)
                     Text("\(Int(prefs.thickness)) px").monospacedDigit()
                         .frame(width: 46, alignment: .trailing)
                 }
@@ -213,6 +216,13 @@ private struct GeneralSettings: View {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
     }
 
+    private static let urls: [(what: String, url: String)] = [
+        ("Start a timer",   "wick://start?d=25m"),
+        ("Pause or resume", "wick://toggle"),
+        ("Add time",        "wick://add?d=10m"),
+        ("Stop",            "wick://stop"),
+    ]
+
     var body: some View {
         Form {
             Section {
@@ -234,10 +244,14 @@ private struct GeneralSettings: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section("Scripting") {
-                Text("wick://start?d=25m · toggle · add?d=10m · stop")
-                    .font(.system(.caption, design: .monospaced))
-                    .textSelection(.enabled)
-                Text("Also `open -a Wick --args --start 25m`. There's a Raycast extension in the repo.")
+                ForEach(Self.urls, id: \.url) { row in
+                    LabeledContent(row.what) {
+                        Text(row.url)
+                            .font(.system(.caption, design: .monospaced))
+                            .textSelection(.enabled)
+                    }
+                }
+                Text("Open any of these from a script, a Shortcut or Raycast. Durations accept 25, 45m, 1h30 or 90s.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section {

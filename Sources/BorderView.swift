@@ -270,7 +270,13 @@ final class BorderView: NSView {
 
     // MARK: - Geometry
 
-    private var lineWidth: CGFloat { max(1, CGFloat(Prefs.shared.thickness) * previewScale) }
+    /// A hairline is allowed to be genuinely thin — half a point still lands on
+    /// a whole pixel on a Retina display. The settings sample keeps a 1 pt floor,
+    /// or the thinnest weights would preview as nothing at all.
+    private var lineWidth: CGFloat {
+        let floor: CGFloat = previewScale < 1 ? 1 : 0.5
+        return max(floor, CGFloat(Prefs.shared.thickness) * previewScale)
+    }
 
     private func currentRing() -> RingPath {
         let t = lineWidth

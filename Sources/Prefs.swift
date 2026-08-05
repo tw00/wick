@@ -66,25 +66,25 @@ enum NudgeMode: String, CaseIterable, Identifiable {
 
 /// Named line weights, for switching without hunting along a slider.
 enum BorderWeight: String, CaseIterable, Identifiable {
-    case hairline, narrow, normal, bold
+    case hair, thin, normal, bold
 
     var id: String { rawValue }
 
     var px: Double {
         switch self {
-        case .hairline: return 3
-        case .narrow:   return 4
-        case .normal:   return 6
-        case .bold:     return 10
+        case .hair:   return 1
+        case .thin:   return 3
+        case .normal: return 6
+        case .bold:   return 10
         }
     }
 
     var label: String {
         switch self {
-        case .hairline: return "Hairline 3"
-        case .narrow:   return "Narrow 4"
-        case .normal:   return "Normal 6"
-        case .bold:     return "Bold 10"
+        case .hair:   return "Hair 1"
+        case .thin:   return "Thin 3"
+        case .normal: return "Normal 6"
+        case .bold:   return "Bold 10"
         }
     }
 }

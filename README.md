@@ -57,8 +57,9 @@ Settings. Seven are meant for working; three are not.
 The calm styles warm to amber over the last 15% and to red over the last 5%, so
 the end of a timer is visible without watching for it.
 
-**Width** is `3`, `4`, `6` or `10` px from the menu, or anything from 2–24 px in
-Settings. On a MacBook the corners are rounded to match the display's own glass;
+**Width** is `1`, `3`, `6` or `10` px from the menu, or anything from 1–24 px in
+Settings. The 1 px hairline is about as quiet as a timer gets and still reads at
+the edge of your vision. On a MacBook the corners are rounded to match the display's own glass;
 on an external monitor they stay square. Both are automatic, and overridable.
 
 ## Focus and distractions

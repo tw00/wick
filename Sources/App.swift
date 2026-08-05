@@ -111,12 +111,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             w.makeKeyAndOrderFront(nil)
             return
         }
+        // The size is fixed in one place only — the window. Letting the hosting
+        // controller size the window as well makes the window resize itself
+        // during layout, and the constraint pass never settles: "more Update
+        // Constraints in Window passes than there are views in the window".
         let vc = NSHostingController(rootView: SettingsView())
-        vc.preferredContentSize = NSSize(width: 480, height: 640)
-        let w = NSWindow(contentViewController: vc)
+        vc.sizingOptions = []
+        let w = NSWindow(contentRect: NSRect(origin: .zero, size: SettingsView.size),
+                         styleMask: [.titled, .closable],
+                         backing: .buffered, defer: false)
+        w.contentViewController = vc
+        // Assigning a content view controller resizes the window to that
+        // controller's preferred size, which is zero now that it has no sizing
+        // options — so the size has to be restated afterwards.
+        w.setContentSize(SettingsView.size)
         w.title = "Wick Settings"
-        w.styleMask.remove(.resizable)
-        w.setContentSize(NSSize(width: 480, height: 640))
         w.isReleasedWhenClosed = false
         w.center()
         settingsWindow = w
