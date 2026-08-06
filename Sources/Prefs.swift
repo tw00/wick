@@ -215,14 +215,30 @@ final class Prefs: ObservableObject {
 }
 
 enum Screens {
-    /// Physical corner radius of a display, so the ring can hug a MacBook's
-    /// rounded screen. Read through a private accessor that has been there since
-    /// Big Sur; guarded, and 0 (sharp corners) if it ever goes away.
-    static func detectedCornerRadius(_ screen: NSScreen) -> Double {
+    /// Radii for the two ends of a screen. A MacBook's glass is rounded along
+    /// the top only — the bottom two corners are square.
+    struct Corners: Equatable {
+        var top: Double
+        var bottom: Double
+
+        static let square = Corners(top: 0, bottom: 0)
+        static func uniform(_ r: Double) -> Corners { Corners(top: r, bottom: r) }
+    }
+
+    /// What a MacBook's own glass is rounded to, in points. A constant because
+    /// the system won't say: on macOS 26 `NSScreen` has no corner-radius method
+    /// at all (the old private `_displayCornerRadius` is gone), no SkyLight or
+    /// CoreGraphics symbol answers it, and the IORegistry doesn't carry it
+    /// either. Settings can override it.
+    static let builtInTopRadius: Double = 20
+
+    /// Kept for the machines where the old private accessor still answers.
+    static func detectedCornerRadius(_ screen: NSScreen) -> Double? {
         let sel = NSSelectorFromString("_displayCornerRadius")
         guard screen.responds(to: sel),
-              let value = (screen as AnyObject).value(forKey: "_displayCornerRadius") as? Double
-        else { return 0 }
+              let value = (screen as AnyObject).value(forKey: "_displayCornerRadius") as? Double,
+              value > 0
+        else { return nil }
         return max(0, min(64, value))
     }
 
@@ -235,14 +251,15 @@ enum Screens {
     /// What the border should actually use on this screen. Auto means: round the
     /// corners on a MacBook's own display, because the glass is rounded there,
     /// and keep them square on an external monitor, because it isn't.
-    static func cornerRadius(for screen: NSScreen) -> Double {
+    static func corners(for screen: NSScreen) -> Corners {
         let pref = Prefs.shared.cornerRadius
-        if pref >= 0 { return pref }
-        return isBuiltIn(screen) ? detectedCornerRadius(screen) : 0
+        if pref >= 0 { return .uniform(pref) }
+        guard isBuiltIn(screen) else { return .square }
+        return Corners(top: detectedCornerRadius(screen) ?? builtInTopRadius, bottom: 0)
     }
 
-    static func autoRadiusForMain() -> Double {
-        guard let s = NSScreen.main else { return 0 }
-        return cornerRadius(for: s)
+    static func autoCornersForMain() -> Corners {
+        guard let s = NSScreen.main else { return .square }
+        return corners(for: s)
     }
 }

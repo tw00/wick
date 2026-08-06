@@ -28,8 +28,8 @@ private struct BorderSettings: View {
 
     /// What the border will actually round its corners to, so the sample below
     /// matches the screen rather than guessing.
-    private var radius: CGFloat {
-        CGFloat(prefs.cornersAuto ? Screens.autoRadiusForMain() : prefs.cornerRadius)
+    private var corners: Screens.Corners {
+        prefs.cornersAuto ? Screens.autoCornersForMain() : .uniform(prefs.cornerRadius)
     }
 
     var body: some View {
@@ -44,8 +44,12 @@ private struct BorderSettings: View {
                     .foregroundStyle(.secondary)
 
                 let scale: CGFloat = 0.5
-                let shape = RoundedRectangle(cornerRadius: radius * scale)
-                RingPreview(scale: scale, radius: radius)
+                let shape = UnevenRoundedRectangle(
+                    topLeadingRadius: CGFloat(corners.top) * scale,
+                    bottomLeadingRadius: CGFloat(corners.bottom) * scale,
+                    bottomTrailingRadius: CGFloat(corners.bottom) * scale,
+                    topTrailingRadius: CGFloat(corners.top) * scale)
+                RingPreview(scale: scale, corners: corners)
                     .frame(height: 108)
                     .background(shape.fill(Color.black.opacity(0.3)))
                     .clipShape(shape)
@@ -67,9 +71,9 @@ private struct BorderSettings: View {
             Section("Shape") {
                 Toggle("Match each screen's corners", isOn: Binding(
                     get: { prefs.cornersAuto },
-                    set: { prefs.cornerRadius = $0 ? -1 : Screens.autoRadiusForMain() }))
+                    set: { prefs.cornerRadius = $0 ? -1 : Screens.autoCornersForMain().top }))
                 if prefs.cornersAuto {
-                    Text("Rounded on a MacBook's own display, square on an external monitor.")
+                    Text("A MacBook rounds the top two corners to \(Int(Screens.builtInTopRadius)) px and leaves the bottom square. External monitors stay square.")
                         .font(.caption).foregroundStyle(.secondary)
                 } else {
                     HStack {
@@ -389,9 +393,9 @@ private struct ShortcutField: View {
 /// picking without starting a timer.
 private struct RingPreview: NSViewRepresentable {
     var scale: CGFloat
-    /// Unscaled corner radius; the view applies `scale` itself, so this matches
-    /// the number in the settings below.
-    var radius: CGFloat
+    /// Unscaled corner radii; the view applies `scale` itself, so these match
+    /// the numbers in the settings below.
+    var corners: Screens.Corners
 
     func makeNSView(context: Context) -> BorderView {
         let v = BorderView(frame: .zero)
@@ -407,7 +411,7 @@ private struct RingPreview: NSViewRepresentable {
 
     func updateNSView(_ view: BorderView, context: Context) {
         view.previewScale = scale
-        view.cornerRadius = radius
+        view.corners = corners
         view.invalidateAll()
     }
 }

@@ -30,22 +30,26 @@ struct RingPath {
     private let offsets: [CGFloat]   // cumulative distance at each segment start
     let length: CGFloat
 
-    init(rect: CGRect, radius: CGFloat) {
-        let r = max(0, min(radius, min(rect.width, rect.height) / 2))
+    /// Top and bottom corners are separate because a MacBook's screen is only
+    /// rounded along the top; the bottom two corners are square.
+    init(rect: CGRect, topRadius: CGFloat, bottomRadius: CGFloat) {
+        let limit = min(rect.width, rect.height) / 2
+        let rt = max(0, min(topRadius, limit))
+        let rb = max(0, min(bottomRadius, limit))
         let (minX, maxX, minY, maxY) = (rect.minX, rect.maxX, rect.minY, rect.maxY)
         let cx = rect.midX
         let q = CGFloat.pi / 2
 
         var s: [Seg] = []
-        s.append(.line(from: CGPoint(x: cx, y: maxY), to: CGPoint(x: maxX - r, y: maxY)))
-        if r > 0 { s.append(.arc(center: CGPoint(x: maxX - r, y: maxY - r), radius: r, start: q, end: 0)) }
-        s.append(.line(from: CGPoint(x: maxX, y: maxY - r), to: CGPoint(x: maxX, y: minY + r)))
-        if r > 0 { s.append(.arc(center: CGPoint(x: maxX - r, y: minY + r), radius: r, start: 0, end: -q)) }
-        s.append(.line(from: CGPoint(x: maxX - r, y: minY), to: CGPoint(x: minX + r, y: minY)))
-        if r > 0 { s.append(.arc(center: CGPoint(x: minX + r, y: minY + r), radius: r, start: -q, end: -.pi)) }
-        s.append(.line(from: CGPoint(x: minX, y: minY + r), to: CGPoint(x: minX, y: maxY - r)))
-        if r > 0 { s.append(.arc(center: CGPoint(x: minX + r, y: maxY - r), radius: r, start: .pi, end: q)) }
-        s.append(.line(from: CGPoint(x: minX + r, y: maxY), to: CGPoint(x: cx, y: maxY)))
+        s.append(.line(from: CGPoint(x: cx, y: maxY), to: CGPoint(x: maxX - rt, y: maxY)))
+        if rt > 0 { s.append(.arc(center: CGPoint(x: maxX - rt, y: maxY - rt), radius: rt, start: q, end: 0)) }
+        s.append(.line(from: CGPoint(x: maxX, y: maxY - rt), to: CGPoint(x: maxX, y: minY + rb)))
+        if rb > 0 { s.append(.arc(center: CGPoint(x: maxX - rb, y: minY + rb), radius: rb, start: 0, end: -q)) }
+        s.append(.line(from: CGPoint(x: maxX - rb, y: minY), to: CGPoint(x: minX + rb, y: minY)))
+        if rb > 0 { s.append(.arc(center: CGPoint(x: minX + rb, y: minY + rb), radius: rb, start: -q, end: -.pi)) }
+        s.append(.line(from: CGPoint(x: minX, y: minY + rb), to: CGPoint(x: minX, y: maxY - rt)))
+        if rt > 0 { s.append(.arc(center: CGPoint(x: minX + rt, y: maxY - rt), radius: rt, start: .pi, end: q)) }
+        s.append(.line(from: CGPoint(x: minX + rt, y: maxY), to: CGPoint(x: cx, y: maxY)))
 
         var offs: [CGFloat] = []
         var total: CGFloat = 0

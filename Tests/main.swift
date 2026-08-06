@@ -61,12 +61,18 @@ check(Format.human(5400) == "1h 30m", "human hour and minutes", Format.human(540
 
 print("RingPath")
 let rect = CGRect(x: 0, y: 0, width: 400, height: 300)
-let square = RingPath(rect: rect, radius: 0)
+let square = RingPath(rect: rect, topRadius: 0, bottomRadius: 0)
 equal(Double(square.length), 1400, "square perimeter", tolerance: 0.5)
 
-let rounded = RingPath(rect: rect, radius: 50)
+let rounded = RingPath(rect: rect, topRadius: 50, bottomRadius: 50)
 // Four quarter-circles replace four corners: 2πr instead of 8r.
 equal(Double(rounded.length), 1400 - 8 * 50 + 2 * .pi * 50, "rounded perimeter", tolerance: 0.5)
+
+// A MacBook screen: rounded along the top, square along the bottom.
+let mac = RingPath(rect: rect, topRadius: 50, bottomRadius: 0)
+equal(Double(mac.length), 1400 - 4 * 50 + .pi * 50, "top-only rounded perimeter", tolerance: 0.5)
+check(mac.sample(at: 0.5).point.y == rect.minY, "bottom edge still reaches the corner",
+      "\(mac.sample(at: 0.5).point)")
 
 let start = square.sample(at: 0)
 equal(Double(start.point.x), 200, "starts at top centre (x)")

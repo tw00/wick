@@ -68,7 +68,7 @@ final class OverlayController {
 
         for (w, screen) in zip(windows, screens) {
             w.setFrame(screen.frame, display: false)
-            w.border?.cornerRadius = CGFloat(Screens.cornerRadius(for: screen))
+            w.border?.corners = Screens.corners(for: screen)
             w.border?.setFrameSize(screen.frame.size)
             w.orderFrontRegardless()
         }

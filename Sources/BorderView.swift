@@ -24,7 +24,8 @@ final class BorderView: NSView {
     /// Shrinks the line to suit a small sample view; 1 for a real screen.
     var previewScale: CGFloat = 1
     /// Corner radius for the screen this view covers, in points.
-    var cornerRadius: CGFloat = 0
+    /// Corner radii of the screen this border is on, in points.
+    var corners: Screens.Corners = .square
 
     private var link: CADisplayLink?
     private var clock: CFTimeInterval = 0
@@ -280,8 +281,12 @@ final class BorderView: NSView {
 
     private func currentRing() -> RingPath {
         let t = lineWidth
-        let radius = max(0, cornerRadius * previewScale - t / 2)
-        return RingPath(rect: bounds.insetBy(dx: t / 2, dy: t / 2), radius: radius)
+        // The ring is stroked down the middle of the line, so its centreline
+        // radius is the screen's radius less half the line width.
+        let top = max(0, CGFloat(corners.top) * previewScale - t / 2)
+        let bottom = max(0, CGFloat(corners.bottom) * previewScale - t / 2)
+        return RingPath(rect: bounds.insetBy(dx: t / 2, dy: t / 2),
+                        topRadius: top, bottomRadius: bottom)
     }
 
     private func headRadius(_ style: RingStyle, _ w: CGFloat) -> CGFloat {
