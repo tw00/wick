@@ -211,6 +211,9 @@ private struct GeneralSettings: View {
     @ObservedObject private var prefs = Prefs.shared
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var launchError: String?
+    @State private var skillInstalled = Integrations.skillInstalled
+    @State private var scriptsInstalled = Integrations.scriptsInstalled
+    @State private var integrationError: String?
 
     private var version: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—"
@@ -243,6 +246,34 @@ private struct GeneralSettings: View {
                 Text("Work anywhere, no Accessibility permission needed. If a combination does nothing, another app already owns it.")
                     .font(.caption).foregroundStyle(.secondary)
             }
+            Section("Integrations") {
+                IntegrationRow(
+                    name: "Claude Code skill",
+                    detail: "Lets Claude start a timer when you ask it to. Written to ~/.claude/skills/focus-timer.",
+                    installed: skillInstalled,
+                    install: { try Integrations.installSkill() },
+                    remove: { try Integrations.removeSkill() },
+                    refresh: { skillInstalled = Integrations.skillInstalled })
+
+                IntegrationRow(
+                    name: "Raycast commands",
+                    detail: scriptsInstalled
+                        ? "Add the folder once in Raycast → Extensions → Script Commands."
+                        : "Start, pause, add time and stop, as Raycast script commands.",
+                    installed: scriptsInstalled,
+                    install: { try Integrations.installScripts(); Integrations.revealScripts() },
+                    remove: { try Integrations.removeScripts() },
+                    refresh: { scriptsInstalled = Integrations.scriptsInstalled })
+
+                if scriptsInstalled {
+                    Button("Show Script Folder") { Integrations.revealScripts() }
+                        .font(.caption)
+                }
+                if let integrationError {
+                    Text(integrationError).font(.caption).foregroundStyle(.orange)
+                }
+            }
+
             Section("Scripting") {
                 ForEach(Self.urls, id: \.url) { row in
                     LabeledContent(row.what) {
@@ -268,6 +299,41 @@ private struct GeneralSettings: View {
         } catch {
             launchError = "Couldn't change login item: \(error.localizedDescription)"
             launchAtLogin = SMAppService.mainApp.status == .enabled
+        }
+    }
+}
+
+/// One installable extra: what it is, whether it's there, and the one button
+/// that changes that.
+private struct IntegrationRow: View {
+    let name: String
+    let detail: String
+    let installed: Bool
+    let install: () throws -> Void
+    let remove: () throws -> Void
+    let refresh: () -> Void
+
+    @State private var error: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Label(name, systemImage: installed ? "checkmark.circle.fill" : "circle.dashed")
+                    .foregroundStyle(installed ? Color.green : Color.secondary)
+                Spacer()
+                Button(installed ? "Remove" : "Install") {
+                    do {
+                        try installed ? remove() : install()
+                        error = nil
+                    } catch {
+                        self.error = error.localizedDescription
+                    }
+                    refresh()
+                }
+            }
+            Text(error ?? detail)
+                .font(.caption)
+                .foregroundStyle(error == nil ? Color.secondary : Color.orange)
         }
     }
 }

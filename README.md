@@ -104,15 +104,24 @@ open "wick://stop"
 When working on a style, `open "wick://start?d=25m&at=0.42"` starts a timer
 already 42% spent, so you can see the interesting part without waiting for it.
 
-A **Raycast extension** lives in [`raycast/`](raycast/) — Start Timer (with a
-duration argument), Pause or Resume, Add Time, Stop:
+## Raycast and Claude
 
-```bash
-cd raycast && npm install && npx ray develop
-```
+**Settings → General → Integrations** installs and removes both with one button
+each, and shows you which are present.
 
-A **Claude Code skill** at `~/.claude/skills/focus-timer/` lets Claude set one
-for you: "give me 25 minutes on this" starts the border and reports the time.
+- **Claude Code skill** — written to `~/.claude/skills/focus-timer/`. Ask Claude
+  for "25 minutes on this" and it starts the border and tells you when it ends.
+- **Raycast commands** — Start, Pause or Resume, Add Time and Stop as script
+  commands, written to `~/Library/Application Support/Wick/Raycast Scripts`.
+  Raycast keeps its script directories in its own database rather than in
+  readable preferences, so Wick can't register the folder for you: add it once
+  in **Raycast → Extensions → Script Commands**. Installing reveals the folder
+  in Finder to save you finding it.
+
+Removing either deletes the files and nothing else.
+
+A full **Raycast extension** (a real extension rather than script commands) is in
+[`raycast/`](raycast/) if you'd rather run that: `npm install && npx ray develop`.
 
 ## How it draws
 
