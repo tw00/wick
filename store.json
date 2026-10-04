@@ -1,0 +1,9 @@
+{
+  "summary": "A timer that burns down the edge of your screen.",
+  "detail": "Wick draws a thin line around the perimeter of the display and shortens it as time runs out. It lives in the menu bar. A sound marks the end.",
+  "system": "macOS 14 or later, Apple silicon",
+  "accent": "#e8a54b",
+  "audience": "signed-in",
+  "emails": [],
+  "github": "https://github.com/tw00/wick"
+}
